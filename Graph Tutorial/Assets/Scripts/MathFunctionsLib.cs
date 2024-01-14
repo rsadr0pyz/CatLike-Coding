@@ -7,6 +7,7 @@ public static class MathFunctionsLib
 
 
     public enum FunctionName{
+        Plane,
         Wave,
         MultiWave,
         Ripple, 
@@ -19,7 +20,7 @@ public static class MathFunctionsLib
     }
     public delegate Vector3 MathFunction(float x, float z, float t);
 
-    private static MathFunction[] functions = {Wave, MultiWave, Ripple, Sphere, OddSphere, OddSphereHorizontal, OddSphereVertical, Torus, WeirdTorus};
+    private static MathFunction[] functions = {Plane, Wave, MultiWave, Ripple, Sphere, OddSphere, OddSphereHorizontal, OddSphereVertical, Torus, WeirdTorus};
 
     public static MathFunction GetFunctionByName(FunctionName name){
         return functions[(int)name];
@@ -153,6 +154,10 @@ public static class MathFunctionsLib
 
         vec.y = smallR * Sin(PI * v);
         return vec;
+    }
+
+    public static Vector3 Plane(float u, float v, float t = 0){
+        return new Vector3(u, 0, v);
     }
 
 }

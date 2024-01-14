@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,7 +14,7 @@ public class Graph : MonoBehaviour
     [SerializeField, Range(-5, 5)]
     private float speed = 0;
 
-    [SerializeField, Range(10, 300)]
+    [SerializeField, Range(2, 300)]
     private int resolution = 25;
     private int _resolution = 25;
 
@@ -24,12 +25,23 @@ public class Graph : MonoBehaviour
     [SerializeField]
     private MathFunctionsLib.FunctionName functionName;
 
+    [SerializeField]
+    private bool hide = false;
+    private bool _hide;
+
 
     private Transform[,] points;
+
+    private Mesh mesh;
 
     private void Awake()
     {
         _resolution = resolution;
+        _hide = hide;
+        _pointScale = pointScale;
+
+        mesh = new Mesh();
+        GetComponent<MeshFilter>().mesh = mesh;
         InstantiatePoints();
     }
 
@@ -38,7 +50,7 @@ public class Graph : MonoBehaviour
     private void Start()
     {
         GraphFunction();
-
+        GenerateMesh();
     }
 
     private void Update()
@@ -46,6 +58,7 @@ public class Graph : MonoBehaviour
         time += speed * Time.deltaTime;
         UpdateObjects();
         GraphFunction(time);
+        GenerateMesh();
     }
 
     private void GraphFunction(float time = 0){
@@ -63,6 +76,7 @@ public class Graph : MonoBehaviour
         {
             for(int k = 0; k<resolution; k++)
             {
+
                 float u = startUPos + k*stepSizeU;
                 float v = startVPos + i*stepSizeV;
 
@@ -81,11 +95,58 @@ public class Graph : MonoBehaviour
             {
                 points[i, k] = Instantiate(pointPrefab, transform);
                 points[i, k].localScale = Vector3.one * pointScale;
+                points[i, k].gameObject.SetActive(!hide);
             }
 
         }
     }
 
+    private void GenerateMesh()
+    {
+        mesh.Clear();
+        
+        List<Vector3> vertices = new List<Vector3>();
+
+        foreach(Transform point in points)
+            vertices.Add(point.localPosition);
+
+        mesh.SetVertices(vertices);
+
+
+        int[] triangles = new int[resolution*resolution*6];
+
+        int count = 0;
+        for(int i = 0; i<resolution-1; i++){
+            for(int k = 0; k<resolution-1; k++){
+                triangles[count++] = i*resolution + k;
+                triangles[count++] = (i+1)*resolution + k;
+                triangles[count++] = (i+1)*resolution + k + 1;
+
+                triangles[count++] = i*resolution + k;
+                triangles[count++] = (i+1)*resolution + k + 1;
+                triangles[count++] = i*resolution + k + 1;
+            }
+        }
+        mesh.triangles = triangles; 
+
+        mesh.RecalculateNormals();
+
+       /** Vector3[] vertices = {
+            new Vector3(0,0,0),
+            new Vector3(1,0,0)
+            new Vector3(1,0,1),
+            new Vector3(0,0,1),
+        };
+
+        int[] triangles = {
+            0, 1, 2,
+            0, 2, 3
+        };
+
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;*/
+
+    }
     private void UpdateObjects(){
         if(_resolution != resolution)
         {
@@ -125,6 +186,7 @@ public class Graph : MonoBehaviour
                         {
                             newPoints[i, k] = Instantiate(pointPrefab, transform);
                             newPoints[i, k].localScale *= pointScale;
+                            newPoints[i, k].gameObject.SetActive(!hide);
                         }
                     }
 
@@ -136,12 +198,20 @@ public class Graph : MonoBehaviour
         }
 
         if(_pointScale != pointScale)
+
         {
             foreach(Transform point in points){
                 point.localScale = Vector3.one * pointScale;
             }
 
             _pointScale = pointScale;
+        }
+
+        if(_hide != hide){
+            _hide = hide;
+            foreach(Transform point in points){
+                point.gameObject.SetActive(!hide);
+            }
         }
     }
 }
